@@ -29,13 +29,22 @@ func BenchmarkSmallBasisL3FP100x100(b *testing.B) {
 			}
 		}
 		b.StartTimer()
-		_ = basis.L3FP(0.6)
+		_ = basis.L3FP(0.99)
 	}
 }
 
-func ExampleReduce() {
+
+func ExampleReduceL3FP() {
 	fmt.Println(SmallBasisTest)
-	fmt.Println(SmallBasisTest.L3FP(0.99))
+	fmt.Println(SmallBasisTest.L3FP(0.9))
+	// Output:
+	// [[1 1 1] [-1 0 2] [3 5 6]]
+	// [[0 1 0] [1 0 1] [-1 0 2]]
+}
+
+func ExampleReduceL3FPDeep() {
+	fmt.Println(SmallBasisTest)
+	fmt.Println(SmallBasisTest.L3FPDeep(0.9))
 	// Output:
 	// [[1 1 1] [-1 0 2] [3 5 6]]
 	// [[0 1 0] [1 0 1] [-1 0 2]]

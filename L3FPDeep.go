@@ -8,13 +8,10 @@ import (
 	"math"
 )
 
-// L3FP is L^3-Reduction in floating point
-// Basis is kept in exact representation, but orthogonal basis
-// and friends are in floating point.
-// Basis with values above 2^59 seem to have greatly increased
-// running time and could give wrong results.
+// L3FPDeep is L3FP with 'deep insertion'
+// This is super-polynomial time in worst case, but will output a more reduced basis.
 // Delta should be 0.5 < delta < 1
-func (inBasis SmallBasis) L3FP(delta float64) SmallBasis {
+func (inBasis SmallBasis) L3FPDeep(delta float64) SmallBasis {
 	var (
 		basis = inBasis.Copy()
 		k     = 1
@@ -59,6 +56,7 @@ func (inBasis SmallBasis) L3FP(delta float64) SmallBasis {
 		}
 	}
 
+L:
 	for k < len(basis) {
 		// 2.
 		c[k] = dot(bd[k], bd[k])
@@ -110,19 +108,32 @@ func (inBasis SmallBasis) L3FP(delta float64) SmallBasis {
 			continue
 		}
 
-		// 4.
-		if delta*c[k-1] > c[k]+mu[k][k-1]*mu[k][k-1]*c[k-1] {
+		// New step 4.
+		_c := dot(bd[k], bd[k])
+		for i := 0; i < k; i++ {
+			if delta*c[i] <= _c {
+				_c -= mu[k][i] * mu[k][i] * c[i]
+			} else {
+				s := basis[len(basis)-1]
+				basis = append(basis, nil)
+				copy(basis[i+1:len(basis)-1], basis[i:len(basis)-2])
+				basis[i] = s
+				basis = basis[:len(basis)-1]
 
-			basis[k], basis[k-1] = basis[k-1], basis[k]
-			bd[k], bd[k-1] = bd[k-1], bd[k]
+				sd := bd[len(bd)-1]
+				bd = append(bd, nil)
+				copy(bd[i+1:len(bd)-1], bd[i:len(bd)-2])
+				bd[i] = sd
+				bd = bd[:len(bd)-1]
 
-			k -= 1
-			if k < 1 {
-				k = 1
+				k -= 1
+				if k < 1 {
+					k = 1
+				}
+				continue L
 			}
-		} else {
-			k += 1
 		}
+		k += 1
 	}
 	return basis
 }
