@@ -8,9 +8,9 @@ import (
 	"math"
 )
 
-// L3FPDeep is L3FP with 'deep insertion'
+// L3FPDeep is L3FP with 'deep insertion'.
 // This is super-polynomial time in worst case, but will output a more reduced basis.
-// Delta should be 0.5 < delta < 1
+// Delta should be 0.5 < delta < 1.
 func (inBasis SmallBasis) L3FPDeep(delta float64) SmallBasis {
 	var (
 		basis = inBasis.Copy()

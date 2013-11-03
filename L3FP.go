@@ -8,7 +8,7 @@ import (
 	"math"
 )
 
-// L3FP is L^3-Reduction in floating point
+// L3FP is L^3-Reduction in floating point.
 // Basis is kept in exact representation, but orthogonal basis
 // and friends are in floating point.
 // Basis with values above 2^59 seem to have greatly increased
