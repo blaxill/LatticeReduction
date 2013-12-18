@@ -1,44 +1,61 @@
 package LatticeReduction
 
-import "errors"
-
-// SmallBasis is for when all elements of a basis can be represented by int64 types.
-// For stability reasons, elements should be less than 2^59
-type SmallBasis [][]int64
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrInconsistantDimension  = errors.New("Basis vectors have inconsistant dimension.")
 	ErrNotLinearlyIndependant = errors.New("Basis vectors are not linearly independant.")
 )
 
-// Validate
-// TODO: check for linear dependance
-func (b SmallBasis) Validate() error {
-	var m = len(b)
-	if m == 0 {
-		return nil
-	}
+type Float64Vector []float64
 
-	var n = len(b[0])
-
-	if n < m {
-		return ErrNotLinearlyIndependant
-	}
-
-	for i := range b {
-		if len(b[i]) != n {
-			return ErrInconsistantDimension
-		}
-	}
-
-	return nil
+type Vector interface {
+	// FDot(Float64Vector)float64
+	Dot(Vector)float64
+	FReduceInplace(float64,Vector)
+	Len() int
+	Copy() Vector
+	FAt(int) float64
 }
 
-func (b SmallBasis) Copy() SmallBasis {
-	o := make([][]int64, len(b))
+type Basis []Vector
+
+func (lhs Float64Vector) FDot(rhs Float64Vector)(r float64) {
+	for i, x := range lhs {
+		r += x * rhs[i]
+	}
+	return
+}
+
+func dot(lhs Float64Vector, rhs Float64Vector)(r float64){
+			for i, x := range lhs {
+				r += x * rhs[i]
+			}
+			return
+}
+
+func abs(v float64)float64{
+			if v < 0 {
+				v = -v
+			}
+
+			return v
+}
+
+func (b Basis) Copy() Basis {
+	o := make([]Vector, len(b))
 	for i, v := range b {
-		o[i] = make([]int64, len(b[i]))
-		copy(o[i], v)
+		o[i] = v.Copy()
 	}
 	return o
+}
+
+func (b Basis) String() (s string) {
+	for _, r := range b {
+		s += fmt.Sprintln(r)
+	}
+	return s
 }

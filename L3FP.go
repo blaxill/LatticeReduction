@@ -11,51 +11,49 @@ import (
 // L3FP is L^3-Reduction in floating point.
 // Basis is kept in exact representation, but orthogonal basis
 // and friends are in floating point.
-// Basis with values above 2^59 seem to have greatly increased
-// running time and could give wrong results.
 // Delta should be 0.5 < delta < 1
-func (inBasis SmallBasis) L3FP(delta float64) SmallBasis {
+func (inBasis Basis) L3FP(delta float64) Basis {
 	var (
 		basis = inBasis.Copy()
 		k     = 1
 		Fc    = false
-		bd    = make([][]float64, len(basis))
-		mu    = make([][]float64, len(basis))
-		c     = make([]float64, len(basis))
+		bd    = make([]Float64Vector, len(basis))
+		mu    = make([]Float64Vector, len(basis))
+		c     = make(Float64Vector, len(basis))
 
-		dot = func(lhs []float64, rhs []float64) (r float64) {
-			for i, x := range lhs {
-				r += x * rhs[i]
-			}
-			return
-		}
-		idot = func(lhs []int64, rhs []int64) (r float64) {
-			for i, x := range lhs {
-				r += float64(x * rhs[i])
-			}
-			return
-		}
+		// dot = func(lhs []float64, rhs []float64) (r float64) {
+		// 	for i, x := range lhs {
+		// 		r += x * rhs[i]
+		// 	}
+		// 	return
+		// }
+		// idot = func(lhs []int64, rhs []int64) (r float64) {
+		// 	for i, x := range lhs {
+		// 		r += float64(x * rhs[i])
+		// 	}
+		// 	return
+		// }
 
-		abs = func(v float64) float64 {
-			if v < 0 {
-				v = -v
-			}
+		// abs = func(v float64) float64 {
+		// 	if v < 0 {
+		// 		v = -v
+		// 	}
 
-			return v
-		}
+		// 	return v
+		// }
 
-		vecReduce = func(lhs []int64, mu float64, rhs []int64) {
-			for i := range lhs {
-				lhs[i] -= int64(mu * float64(rhs[i]))
-			}
-		}
+		// vecReduce = func(lhs []int64, mu float64, rhs []int64) {
+		// 	for i := range lhs {
+		// 		lhs[i] -= int64(mu * float64(rhs[i]))
+		// 	}
+		// }
 	)
 
 	for i, v := range basis {
-		bd[i] = make([]float64, len(v))
+		bd[i] = make([]float64, v.Len())
 		mu[i] = make([]float64, len(basis))
-		for j := range v {
-			bd[i][j] = float64(v[j])
+		for j := 0; j<v.Len(); j++ {
+			bd[i][j] = v.FAt(j)
 		}
 	}
 
@@ -66,8 +64,8 @@ func (inBasis SmallBasis) L3FP(delta float64) SmallBasis {
 			c[0] = dot(bd[0], bd[0])
 		}
 		for j := 0; j < k; j++ {
-			if abs(dot(bd[k], bd[j])) < _2_p_h_tor*math.Sqrt(dot(bd[k], bd[k])*dot(bd[j], bd[j])) {
-				mu[k][j] = idot(basis[k], basis[j])
+			if abs(dot(bd[k], bd[j])) < _2_p_nh_tor*math.Sqrt(dot(bd[k], bd[k])*dot(bd[j], bd[j])) {
+				mu[k][j] = basis[k].Dot(basis[j])
 			} else {
 				mu[k][j] = dot(bd[k], bd[j])
 			}
@@ -95,12 +93,13 @@ func (inBasis SmallBasis) L3FP(delta float64) SmallBasis {
 				}
 
 				mu[k][j] -= _mu
-				vecReduce(basis[k], _mu, basis[j])
+				basis[k].FReduceInplace( _mu, basis[j])
 				for i := range bd[k] {
-					bd[k][i] = float64(basis[k][i])
+					bd[k][i] = basis[k].FAt(i)
 				}
 			}
 		}
+
 		if Fc {
 			Fc = false
 			k -= 1
