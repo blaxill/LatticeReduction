@@ -12,52 +12,25 @@ import (
 // Basis is kept in exact representation, but orthogonal basis
 // and friends are in floating point.
 // Delta should be 0.5 < delta < 1
-func (inBasis Basis) L3FP(delta float64) Basis {
+func L3FP(inBasis Basis, delta float64) Basis {
 	var (
 		basis = inBasis.Copy()
 		k     = 1
 		Fc    = false
-		bd    = make([]Float64Vector, len(basis))
-		mu    = make([]Float64Vector, len(basis))
-		c     = make(Float64Vector, len(basis))
-
-		// dot = func(lhs []float64, rhs []float64) (r float64) {
-		// 	for i, x := range lhs {
-		// 		r += x * rhs[i]
-		// 	}
-		// 	return
-		// }
-		// idot = func(lhs []int64, rhs []int64) (r float64) {
-		// 	for i, x := range lhs {
-		// 		r += float64(x * rhs[i])
-		// 	}
-		// 	return
-		// }
-
-		// abs = func(v float64) float64 {
-		// 	if v < 0 {
-		// 		v = -v
-		// 	}
-
-		// 	return v
-		// }
-
-		// vecReduce = func(lhs []int64, mu float64, rhs []int64) {
-		// 	for i := range lhs {
-		// 		lhs[i] -= int64(mu * float64(rhs[i]))
-		// 	}
-		// }
+		bd    = make([][]float64, basis.Rank())
+		mu    = make([][]float64, basis.Rank())
+		c     = make([]float64, basis.Rank())
 	)
 
-	for i, v := range basis {
-		bd[i] = make([]float64, v.Len())
-		mu[i] = make([]float64, len(basis))
-		for j := 0; j<v.Len(); j++ {
-			bd[i][j] = v.FAt(j)
+	for i := 0; i<basis.Rank();i++ {
+		bd[i] = make([]float64, basis.Dimension())
+		mu[i] = make([]float64, basis.Rank())
+		for j := 0; j < basis.Dimension(); j++ {
+			bd[i][j] = basis.FGet(i,j)
 		}
 	}
 
-	for k < len(basis) {
+	for k < basis.Rank() {
 		// 2.
 		c[k] = dot(bd[k], bd[k])
 		if k == 1 {
@@ -65,7 +38,7 @@ func (inBasis Basis) L3FP(delta float64) Basis {
 		}
 		for j := 0; j < k; j++ {
 			if abs(dot(bd[k], bd[j])) < _2_p_nh_tor*math.Sqrt(dot(bd[k], bd[k])*dot(bd[j], bd[j])) {
-				mu[k][j] = basis[k].Dot(basis[j])
+				mu[k][j] = basis.FDot(k,j)
 			} else {
 				mu[k][j] = dot(bd[k], bd[j])
 			}
@@ -93,9 +66,9 @@ func (inBasis Basis) L3FP(delta float64) Basis {
 				}
 
 				mu[k][j] -= _mu
-				basis[k].FReduceInplace( _mu, basis[j])
+				basis.FColumnReduce(k, j,_mu)
 				for i := range bd[k] {
-					bd[k][i] = basis[k].FAt(i)
+					bd[k][i] = basis.FGet(k,i)
 				}
 			}
 		}
@@ -112,7 +85,7 @@ func (inBasis Basis) L3FP(delta float64) Basis {
 		// 4.
 		if delta*c[k-1] > c[k]+mu[k][k-1]*mu[k][k-1]*c[k-1] {
 
-			basis[k], basis[k-1] = basis[k-1], basis[k]
+			basis.ColumnSwap(k,k-1)
 			bd[k], bd[k-1] = bd[k-1], bd[k]
 
 			k -= 1

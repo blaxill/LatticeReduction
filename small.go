@@ -1,48 +1,69 @@
 package LatticeReduction
 
-type Int64Vector[]int64
-// type SmallBasis []Int64Vector
+import (
+"fmt"
+"math/big"
+)
 
-func (lhs Int64Vector) Len() int{
-	return len(lhs)
+// Lattice basis for int64 sized values
+type Int64Basis [][]int64 
+
+func (b Int64Basis) Copy()Basis {
+	o:=make(Int64Basis, len(b))
+	for i, x := range b {
+		o[i] = make([]int64,len(x))
+		for j,y:=range x{
+			o[i][j] = y
+		}
+	}
+	return o
 }
 
-// func (lhs Int64Vector) FDot(rhs Float64Vector) float64 {
-// 	for i, x := range lhs {
-// 		r += float64(x * rhs[i])
-// 	}
-// 	return
-// }
+func (b Int64Basis) ColumnSwap(column1,column2 int){
+	b[column1], b[column2] = b[column2], b[column1]
+}
 
-func (lhs Int64Vector) Dot(rhs Vector) (r float64) {
-	_rhs, ok := rhs.(Int64Vector)
-	if !ok{
-		panic("Something went wrong.")
-	}
-	for i, x := range lhs {
-		r += float64(x * _rhs[i])
+
+func (b Int64Basis) Rank() int{
+	return len(b)
+}
+
+func (b Int64Basis) Dimension() int{
+	return len(b[0])
+}
+
+func (b Int64Basis) FDot(column1, column2 int)(r float64){
+	for i, x := range b[column1] {
+		r += float64(x * b[column2][i])
 	}
 	return
 }
 
-func (lhs Int64Vector) FReduceInplace(mu float64, rhs Vector) {
-	_rhs, ok := rhs.(Int64Vector)
-	if !ok{
-		panic("Something went wrong.")
-	}
-	for i := range lhs {
-		lhs[i] -= int64(mu * float64(_rhs[i]))
+func (b Int64Basis) FColumnReduce(column1, column2 int, mu float64){
+	_mu := int64(mu)
+	for i := range b[column1] {
+		b[column1][i] -= _mu*b[column2][i]
 	}
 }
 
-func (lhs Int64Vector) Copy() Vector {
-	r:=make(Int64Vector,len(lhs))
-	for i, x := range lhs {
-		r[i] = x
-	}
-	return r
+func (b Int64Basis) FGet(column,row int)float64{
+	return float64(b[column][row])
 }
 
-func (lhs Int64Vector) FAt(i int) float64 {
-	return float64(lhs[i])
+func (b Int64Basis) String() (s string) {
+	for _, r := range b {
+		s += fmt.Sprintln(r)
+	}
+	return s
+}
+
+func (b Int64Basis) PremoteToBig()Basis{
+	o:=make(BigBasis, len(b))
+	for i, x := range b {
+		o[i] = make([]*big.Int,len(x))
+		for j,y:=range x{
+			o[i][j] = big.NewInt(y)
+		}
+	}
+	return o
 }
