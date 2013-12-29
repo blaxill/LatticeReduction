@@ -9,9 +9,7 @@ import (
 )
 
 // Delta should be 0.5 < delta < 1
-// 
-// BUG: Possibly unstable/wrong
-func L3FPDeep(inBasis Basis, delta float64) Basis {
+func L3FPDeep(inBasis Basis, delta float64, deep int) Basis {
 	var (
 		basis = inBasis.Copy()
 		k     = 1
@@ -21,11 +19,11 @@ func L3FPDeep(inBasis Basis, delta float64) Basis {
 		c     = make([]float64, basis.Rank())
 	)
 
-	for i := 0; i<basis.Rank();i++ {
+	for i := 0; i < basis.Rank(); i++ {
 		bd[i] = make([]float64, basis.Dimension())
 		mu[i] = make([]float64, basis.Rank())
 		for j := 0; j < basis.Dimension(); j++ {
-			bd[i][j] = basis.FGet(i,j)
+			bd[i][j] = basis.FGet(i, j)
 		}
 	}
 
@@ -38,7 +36,7 @@ L:
 		}
 		for j := 0; j < k; j++ {
 			if abs(dot(bd[k], bd[j])) < _2_p_nh_tor*math.Sqrt(dot(bd[k], bd[k])*dot(bd[j], bd[j])) {
-				mu[k][j] = basis.FDot(k,j)
+				mu[k][j] = basis.FDot(k, j)
 			} else {
 				mu[k][j] = dot(bd[k], bd[j])
 			}
@@ -66,9 +64,9 @@ L:
 				}
 
 				mu[k][j] -= _mu
-				basis.FColumnReduce(k, j,_mu)
+				basis.ColumnReduceInt64(k, j, int64(_mu))
 				for i := range bd[k] {
-					bd[k][i] = basis.FGet(k,i)
+					bd[k][i] = basis.FGet(k, i)
 				}
 			}
 		}
@@ -83,26 +81,41 @@ L:
 		}
 
 		// New step 4.
-		_c := dot(bd[k], bd[k])
-		for i := 0; i < k; i++ {
-			if delta*c[i] <= _c {
-				_c -= mu[k][i] * mu[k][i] * c[i]
-			} else {
+		if deep > 0 {
+			_c := dot(bd[k], bd[k])
 
-				for j:=basis.Rank()-1;j>i;j--{
-					basis.ColumnSwap(j,j-1)
-					bd[j],bd[j-1]=bd[j-1],bd[j]
+			i := 0
+			for ; i < k && delta*c[i] <= _c; i++ {
+				_c -= mu[k][i] * mu[k][i] * c[i]
+			}
+
+			// BUG: TODO: Performing deep reduction on commented condition causes infinite loop?
+			for ; i < k && (i < deep /*|| k-i < deep*/); i++ {
+
+				for j := basis.Rank() - 1; j > i; j-- {
+					basis.ColumnSwap(j, j-1)
+					bd[j], bd[j-1] = bd[j-1], bd[j]
 				}
 
-				k -= 1
+				k = i
 				if k < 1 {
-					k = 1
+					k=1
 				}
 				continue L
 			}
 		}
+		if delta*c[k-1] > c[k]+mu[k][k-1]*mu[k][k-1]*c[k-1] {
 
-		k += 1
+			basis.ColumnSwap(k, k-1)
+			bd[k], bd[k-1] = bd[k-1], bd[k]
+
+			k -= 1
+			if k < 1 {
+				k = 1
+			}
+		} else {
+			k += 1
+		}
 	}
 	return basis
 }

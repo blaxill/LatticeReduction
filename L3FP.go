@@ -22,11 +22,11 @@ func L3FP(inBasis Basis, delta float64) Basis {
 		c     = make([]float64, basis.Rank())
 	)
 
-	for i := 0; i<basis.Rank();i++ {
+	for i := 0; i < basis.Rank(); i++ {
 		bd[i] = make([]float64, basis.Dimension())
 		mu[i] = make([]float64, basis.Rank())
 		for j := 0; j < basis.Dimension(); j++ {
-			bd[i][j] = basis.FGet(i,j)
+			bd[i][j] = basis.FGet(i, j)
 		}
 	}
 
@@ -38,7 +38,7 @@ func L3FP(inBasis Basis, delta float64) Basis {
 		}
 		for j := 0; j < k; j++ {
 			if abs(dot(bd[k], bd[j])) < _2_p_nh_tor*math.Sqrt(dot(bd[k], bd[k])*dot(bd[j], bd[j])) {
-				mu[k][j] = basis.FDot(k,j)
+				mu[k][j] = basis.FDot(k, j)
 			} else {
 				mu[k][j] = dot(bd[k], bd[j])
 			}
@@ -66,9 +66,9 @@ func L3FP(inBasis Basis, delta float64) Basis {
 				}
 
 				mu[k][j] -= _mu
-				basis.FColumnReduce(k, j,_mu)
+				basis.ColumnReduceInt64(k, j, int64(_mu))
 				for i := range bd[k] {
-					bd[k][i] = basis.FGet(k,i)
+					bd[k][i] = basis.FGet(k, i)
 				}
 			}
 		}
@@ -85,7 +85,7 @@ func L3FP(inBasis Basis, delta float64) Basis {
 		// 4.
 		if delta*c[k-1] > c[k]+mu[k][k-1]*mu[k][k-1]*c[k-1] {
 
-			basis.ColumnSwap(k,k-1)
+			basis.ColumnSwap(k, k-1)
 			bd[k], bd[k-1] = bd[k-1], bd[k]
 
 			k -= 1

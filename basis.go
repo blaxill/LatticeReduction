@@ -11,24 +11,33 @@ var (
 	ErrNotLinearlyIndependant = errors.New("Basis vectors are not linearly independant.")
 )
 
-
-type Basis interface{
+type Basis interface {
 	Rank() int
 	Dimension() int
 	Copy() Basis
 
-	// Dot(column1, column2 int, out *big.Int)
-	FDot(column1, column2 int)float64
-	// ColumnReduce(column1, column2 int, mu *big.Int) // 
-	FColumnReduce(column1, column2 int, mu float64) // column1 -= mu*column2
+	// TODO: Dot(column1, column2 int, out *big.Int)
 
-	ColumnSwap(column1,column2 int)
+	// column1*column2 as float64
+	FDot(column1, column2 int) float64
+	// Dot(column1-column2), Dot(column1+column2)
+	FPairSize(column1, column2 int) (float64,float64)
 
-	// Get(column,row int, out *big.Int)
-	FGet(column,row int)float64
+	// TODO: ColumnReduce(column1, column2 int, mu *big.Int)
+
+	// column1 -= mu*column2
+	ColumnReduceInt64(column1, column2 int, mu int64)
+
+
+
+	ColumnSwap(column1, column2 int)
+
+	// TODO: Get(column,row int, out *big.Int)
+
+	FGet(column, row int) float64
 }
 
-func dot(lhs , rhs []float64) (r float64) {
+func dot(lhs, rhs []float64) (r float64) {
 	for i, x := range lhs {
 		r += x * rhs[i]
 	}

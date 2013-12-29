@@ -19,11 +19,11 @@ func bigIntToFloat(in *big.Int) float64 {
 	return f
 }
 
-func (b BigBasis) Copy()Basis {
-	o:=make(BigBasis, len(b))
+func (b BigBasis) Copy() Basis {
+	o := make(BigBasis, len(b))
 	for i, x := range b {
-		o[i] = make([]*big.Int,len(x))
-		for j,y:=range x{
+		o[i] = make([]*big.Int, len(x))
+		for j, y := range x {
 			o[i][j] = new(big.Int)
 			o[i][j].Set(y)
 		}
@@ -31,19 +31,19 @@ func (b BigBasis) Copy()Basis {
 	return o
 }
 
-func (b BigBasis) ColumnSwap(column1,column2 int){
+func (b BigBasis) ColumnSwap(column1, column2 int) {
 	b[column1], b[column2] = b[column2], b[column1]
 }
 
-func (b BigBasis) Rank() int{
+func (b BigBasis) Rank() int {
 	return len(b)
 }
 
-func (b BigBasis) Dimension() int{
+func (b BigBasis) Dimension() int {
 	return len(b[0])
 }
 
-func (b BigBasis) FDot(column1, column2 int)(r float64){
+func (b BigBasis) FDot(column1, column2 int) (r float64) {
 	var intermediate = new(big.Int)
 	for i, x := range b[column1] {
 		intermediate.Mul(x, b[column2][i])
@@ -52,10 +52,24 @@ func (b BigBasis) FDot(column1, column2 int)(r float64){
 	return
 }
 
-func (b BigBasis) FColumnReduce(column1, column2 int, mu float64){
+func (b BigBasis) FPairSize(column1, column2 int) (sub,add float64) {
+	var intermediate = new(big.Int)
+	for i, x := range b[column1] {
+		intermediate.Sub(x, b[column2][i])
+		intermediate.Mul(intermediate,intermediate)
+		sub += bigIntToFloat(intermediate)
+		intermediate.Add(x, b[column2][i])
+		intermediate.Mul(intermediate,intermediate)
+		add += bigIntToFloat(intermediate)
+	}
+	return
+}
+
+
+func (b BigBasis) ColumnReduceInt64(column1, column2 int, mu int64) {
 	var (
 		intermediate = new(big.Int)
-		_mu          = big.NewInt(int64(mu))
+		_mu          = big.NewInt(mu)
 	)
 
 	for i := range b[column1] {
@@ -64,7 +78,7 @@ func (b BigBasis) FColumnReduce(column1, column2 int, mu float64){
 	}
 }
 
-func (b BigBasis) FGet(column,row int)float64{
+func (b BigBasis) FGet(column, row int) float64 {
 	return bigIntToFloat(b[column][row])
 }
 
