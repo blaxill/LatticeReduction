@@ -1,0 +1,29 @@
+[package]
+name = "lattice_reduction"
+version = "0.1.0"
+edition = "2024"
+description = "Lattice basis reduction tools (L^3-Reduction in floating point, with deep insertion variant)."
+license = "MIT"
+
+[dependencies]
+num-bigint = "0.4"
+num-traits = "0.2"
+
+[dev-dependencies]
+rand = "0.8"
+rand_chacha = "0.3"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+[profile.bench]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+[[bench]]
+name = "l3fp_bench"
+harness = false
